@@ -2,82 +2,232 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>EnergiKu — Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EnergiKu — Dashboard Monitoring</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Hiasan Tambahan Khusus Elemen Dashboard */
+    .profile-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--white);
+      padding: 8px 16px;
+      border-radius: 30px;
+      border: 1px solid var(--border-color);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-green);
+      color: var(--white);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .welcome-banner {
+      background: linear-gradient(135deg, #2a3426, #516631);
+      color: #ffffff;
+      padding: 35px 40px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 30px;
+      box-shadow: 0 8px 24px rgba(42, 52, 38, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+    .welcome-banner::after {
+      content: '\f1bb';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      right: -20px;
+      bottom: -30px;
+      font-size: 160px;
+      color: rgba(255,255,255,0.04);
+    }
+    .welcome-banner h2 { font-size: 26px; margin-bottom: 8px; color: var(--accent-warm); }
+    .welcome-banner p { font-size: 15px; opacity: 0.9; line-height: 1.6; max-width: 80%; }
+    
+    /* Layout Dua Kolom Dashboard */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+    .chart-container { position: relative; height: 320px; width: 100%; margin-top: 15px; }
+    
+    /* Ornamen Kartu Hiasan Samping */
+    .side-panel { display: flex; flex-direction: column; gap: 24px; }
+    .side-card { background: var(--white); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 24px; }
+    .side-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--bg-sidebar); display: flex; align-items: center; gap: 8px; }
+    
+    /* Progress Bar Target */
+    .progress-bar-bg { background: #efebe4; border-radius: 20px; height: 12px; width: 100%; margin: 12px 0 6px 0; overflow: hidden; }
+    .progress-bar-fill { background: var(--accent-green); height: 100%; width: 0%; transition: width 0.5s ease; }
+    
+    /* Indikator Lampu Status */
+    .indicator-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border-color); }
+    .indicator-item:last-child { border: none; }
+    .status-dot { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .status-gray { background: #f0eee9; color: #72695e; }
+    .status-green { background: #e6eae1; color: #516631; }
+    
+    /* Challenge Box */
+    .challenge-box { background: #fdfaf4; border: 1px dashed var(--accent-warm); border-radius: var(--radius-sm); padding: 14px; margin-top: 10px; display: flex; gap: 12px; align-items: flex-start; }
+    .challenge-box i { color: var(--accent-warm); font-size: 18px; margin-top: 2px; }
+  </style>
 </head>
 <body>
-  <div class="toast-container" id="toastContainer"></div>
 
+  <!-- SIDEBAR UTAMA -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon"><i class="fas fa-bolt"></i></div>
-      <div class="brand-name">EnergiKu</div>
-      <div class="brand-sub">Kalkulator Energi</div>
+      <div class="brand-title"><i class="fas fa-leaf"></i> EnergiKu</div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Utama</div>
-      <a href="index.html" class="nav-item active"><i class="fas fa-gauge-high"></i> Dashboard</a>
-      <a href="input.html" class="nav-item"><i class="fas fa-calculator"></i> Input Energi</a>
-      <a href="history.html" class="nav-item"><i class="fas fa-clock-rotate-left"></i> Riwayat Log</a>
+      <a href="/index" class="nav-item active"><i class="fas fa-chart-pie"></i> Dashboard</a>
+      <a href="/input" class="nav-item"><i class="fas fa-pen-to-square"></i> Input Energi</a>
+      <a href="/history" class="nav-item"><i class="fas fa-history"></i> Riwayat Log</a>
+      
       <div class="nav-section-label">Fitur Tambahan</div>
-      <a href="target.html" class="nav-item"><i class="fas fa-bullseye"></i> Target & Simulasi</a>
-      <a href="edukasi.html" class="nav-item"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
-      <a href="pengaturan.html" class="nav-item"><i class="fas fa-gear"></i> Pengaturan Tarif</a>
+      <a href="/target" class="nav-item"><i class="fas fa-bullseye"></i> Target & Acuan</a>
+      <a href="/edukasi" class="nav-item"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
+      <a href="/pengaturan" class="nav-item"><i class="fas fa-sliders"></i> Pengaturan Tarif</a>
     </nav>
   </aside>
 
+  <!-- CONTENT UTAMA -->
   <main class="main">
-    <div class="topbar">
-      <div class="page-title-area">
-        <h1>Dashboard Analisis</h1>
-        <p>Pantau rangkuman dan jejak emisi karbon Anda</p>
+    
+    <!-- TOP BAR USER -->
+    <div class="profile-section">
+      <div class="date-view" style="color: var(--text-muted); font-size: 14px; font-weight: 500;">
+        <i class="far fa-calendar-alt"></i> Panel Monitoring Real-Time
+      </div>
+      <div class="user-badge">
+        <div class="user-avatar"><i class="fas fa-user-leaf"></i></div>
+        <span>Halo, Eco User 🌱</span>
       </div>
     </div>
-    
-    <div class="page-content">
-      <div class="welcome-banner">
-        <div class="welcome-text">
-          <h2>Selamat Datang di EnergiKu 👋</h2>
-          <p>Mulai hemat energi demi bumi yang lebih sehat.</p>
+
+    <!-- BANNER SELAMAT DATANG -->
+    <div class="welcome-banner">
+      <h2>Selamat Datang di EnergiKu</h2>
+      <p>Sistem manajemen cerdas emisi karbon dan pemantauan konsumsi energi harian rumah tangga. Mari kurangi pemborosan demi kelestarian bumi.</p>
+    </div>
+
+    <!-- 4 KARTU STATISTIK WIDGET -->
+    <div class="stats-grid">
+      <div class="stat-card" style="border-left: 4px solid #516631;">
+        <div class="stat-icon" style="background:#e6eae1; color:#516631;"><i class="fas fa-wallet"></i></div>
+        <div class="stat-info">
+          <p>Total Pengeluaran</p>
+          <h3 id="widgetBiaya">Rp 0</h3>
+        </div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #72695e;">
+        <div class="stat-icon" style="background:#f0eee9; color:#72695e;"><i class="fas fa-cloud-smog"></i></div>
+        <div class="stat-info">
+          <p>Total Jejak Carbon</p>
+          <h3 id="widgetCarbon">0.0 kg</h3>
+        </div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #cda97e;">
+        <div class="stat-icon" style="background:#fbf3e7; color:#cda97e;"><i class="fas fa-calendar-check"></i></div>
+        <div class="stat-info">
+          <p>Log Hari Terdata</p>
+          <h3 id="widgetLog">0 Hari</h3>
+        </div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #e67e22;">
+        <div class="stat-icon" style="background:#fdf2e9; color:#e67e22;"><i class="fas fa-medal"></i></div>
+        <div class="stat-info">
+          <p>Eco-Score Grade</p>
+          <h3 id="widgetScore">-</h3>
+          <span id="widgetScoreText" style="font-size: 11px; color: var(--text-muted);">Belum ada data</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TATA LETAK DUA KOLOM DASHBOARD -->
+    <div class="dashboard-layout">
+      
+      <!-- KOLOM KIRI: GRAFIK UTAMA / GRAFIK SKETSA KOSONG -->
+      <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 17px; font-weight: 700;"><i class="fas fa-chart-line" style="color:var(--accent-green); margin-right:8px;"></i>Grafik Tren Naik-Turun Penggunaan Energi</h3>
+        <div class="chart-container">
+          <canvas id="energyChart"></canvas>
         </div>
       </div>
 
-      <div class="stats-grid">
-        <div class="stat-card green"><div class="stat-label">Listrik Terakhir</div><div class="stat-value" id="lblListrik">- <span class="stat-unit">kWh</span></div></div>
-        <div class="stat-card amber"><div class="stat-label">BBM Terakhir</div><div class="stat-value" id="lblBBM">- <span class="stat-unit">Liter</span></div></div>
-        <div class="stat-card blue"><div class="stat-label">Air Terakhir</div><div class="stat-value" id="lblAir">- <span class="stat-unit">m³</span></div></div>
-        <div class="stat-card red"><div class="stat-label">Estimasi Biaya</div><div class="stat-value" id="lblBiaya">Rp -</div></div>
+      <!-- KOLOM KANAN: PANEL PANEL HIASAN -->
+      <div class="side-panel">
+        
+        <!-- MONITOR STATUS INDIKATOR -->
+        <div class="side-card">
+          <h4><i class="fas fa-circle-check" style="color: var(--accent-green);"></i>Status Indikator Hari Ini</h4>
+          <div class="indicator-item">
+            <span style="font-size:14px;"><i class="fas fa-bolt" style="color:#e67e22; width:20px;"></i> Listrik</span>
+            <span class="status-dot status-gray" id="indListrik">Off-Log</span>
+          </div>
+          <div class="indicator-item">
+            <span style="font-size:14px;"><i class="fas fa-gas-pump" style="color:#e74c3c; width:20px;"></i> BBM Kendaraan</span>
+            <span class="status-dot status-gray" id="indBbm">Off-Log</span>
+          </div>
+          <div class="indicator-item">
+            <span style="font-size:14px;"><i class="fas fa-faucet" style="color:#3498db; width:20px;"></i> Air PDAM</span>
+            <span class="status-dot status-gray" id="indAir">Off-Log</span>
+          </div>
+        </div>
+
+        <!-- MONITOR PROGRESS TARGET BULANAN -->
+        <div class="side-card">
+          <h4><i class="fas fa-shield-heart" style="color: #cda97e;"></i>Batas Keamanan Emisi</h4>
+          <p style="font-size: 12px; color: var(--text-muted);">Ambang batas ideal akumulasi emisi karbon (Maksimal 150 kg CO2):</p>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="targetBarFill"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-top:4px;">
+            <span id="targetBarText">0 kg CO2</span>
+            <span style="color: var(--text-muted);">Max: 150 kg</span>
+          </div>
+        </div>
+
+        <!-- KOTAK MISI MINGGUAN -->
+        <div class="side-card">
+          <h4><i class="fas fa-star" style="color: #e67e22;"></i>Misi Hijau Minggu Ini</h4>
+          <div class="challenge-box">
+            <i class="fas fa-seedling"></i>
+            <div style="font-size: 13px; line-height: 1.4;">
+              <strong>Cabut Kabel Vampire Power!</strong><br>
+              Lepaskan colokan charger HP atau laptop dari saklar jika baterai sudah penuh 100%.
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="card">
-        <div class="card-header"><div class="card-title">Tren Konsumsi Energi</div></div>
-        <div class="card-body"><canvas id="chartTren" style="max-height: 250px;"></canvas></div>
-      </div>
     </div>
+
   </main>
 
-  <script src="js/app.js"></script>
+  <!-- LIBRARY CHART.JS DARI CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/js/app.js"></script>
   <script>
-    const records = DB.getRecords();
-    if(records.length > 0) {
-      const last = records[records.length - 1];
-      document.getElementById('lblListrik').innerHTML = `${last.listrik} <span class="stat-unit">kWh</span>`;
-      document.getElementById('lblBBM').innerHTML = `${last.bbm} <span class="stat-unit">L</span>`;
-      document.getElementById('lblAir').innerHTML = `${last.air} <span class="stat-unit">m³</span>`;
-      document.getElementById('lblBiaya').innerText = `Rp ${last.biaya.toLocaleString('id-ID')}`;
-    }
-
-    const ctx = document.getElementById('chartTren').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: records.map(r => r.tanggal),
-        datasets: [{ label: 'Listrik (kWh)', data: records.map(r => r.listrik), borderColor: '#2ec27e', tension: 0.2 }]
-      }
-    });
+    document.addEventListener("DOMContentLoaded", initDashboard);
   </script>
 </body>
 </html>

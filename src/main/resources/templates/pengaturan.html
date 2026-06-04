@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EnergiKu — Pengaturan Tarif</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body> <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-title"><i class="fas fa-leaf"></i> EnergiKu</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Utama</div>
+      <a href="/index" class="nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+      <a href="/input" class="nav-item"><i class="fas fa-pen-to-square"></i> Input Energi</a>
+      <a href="/history" class="nav-item"><i class="fas fa-history"></i> Riwayat Log</a>
+      
+      <div class="nav-section-label">Fitur Tambahan</div>
+      <a href="/target" class="nav-item"><i class="fas fa-bullseye"></i> Target & Acuan</a>
+      <a href="/edukasi" class="nav-item"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
+      <a href="/pengaturan" class="nav-item active"><i class="fas fa-sliders"></i> Pengaturan Tarif</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1>Pengaturan Tarif Dasar</h1>
+      <p>Konfigurasi basis tarif pengali biaya otomatis pada sistem backend</p>
+    </div>
+
+    <div class="card">
+      <form onsubmit="event.preventDefault();">
+        <div class="form-group">
+          <label>Tarif Listrik Dasar</label>
+          <div class="input-group"><input type="text" value="1444" disabled style="background-color: #f1ede6;"><span class="input-unit">Rp/kWh</span></div>
+        </div>
+        <div class="form-group">
+          <label>Harga BBM Rata-rata</label>
+          <div class="input-group"><input type="text" value="10000" disabled style="background-color: #f1ede6;"><span class="input-unit">Rp/Liter</span></div>
+        </div>
+        <button class="btn btn-primary" style="background-color: var(--text-muted); cursor: not-allowed;" disabled><i class="fas fa-lock"></i> Konfigurasi Terkunci</button>
+      </form>
+    </div>
+  </main>
+
+</body>
+</html>
