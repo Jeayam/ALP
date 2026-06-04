@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EnergiKu — Pendaftaran Akun</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #efebe4, #e6eae1);
+      --accent-green: #516631;
+      --accent-hover: #3d4d24;
+      --text-dark: #2a3426;
+      --white: #ffffff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--bg-gradient); height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .auth-container { background: var(--white); width: 100%; max-width: 420px; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(42, 52, 38, 0.08); border: 1px solid rgba(0,0,0,0.02); }
+    .brand-header { text-align: center; margin-bottom: 25px; }
+    .brand-header i { color: var(--accent-green); font-size: 32px; margin-bottom: 10px; }
+    .brand-header h2 { color: var(--text-dark); font-size: 24px; font-weight: 800; }
+    .brand-header p { color: #7f8c8d; font-size: 13px; margin-top: 4px; }
+    
+    .form-group { margin-bottom: 18px; position: relative; }
+    .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
+    .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #dcd8d0; border-radius: 8px; font-size: 14px; color: var(--text-dark); transition: all 0.3s ease; background: #fafaf9; }
+    .form-group input:focus { outline: none; border-color: var(--accent-green); background: var(--white); box-shadow: 0 0 0 3px rgba(81, 102, 49, 0.15); }
+    
+    .btn-submit { width: 100%; background: var(--accent-green); color: var(--white); border: none; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.3s ease; margin-top: 10px; }
+    .btn-submit:hover { background: var(--accent-hover); }
+    
+    .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background: #fdf2f2; color: #c0392b; border: 1px solid #f5c6cb; }
+    
+    .auth-footer { text-align: center; margin-top: 25px; font-size: 13px; color: #7f8c8d; }
+    .auth-footer a { color: var(--accent-green); font-weight: 700; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+
+    /* Tambahkan ini di dalam tag <style> register.html */
+@keyframes authEntrance {
+  from { opacity: 0; transform: scale(0.97) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.auth-container {
+  /* ... properti lama kamu ... */
+  animation: authEntrance 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+  </style>
+</head>
+<body>
+
+  <div class="auth-container">
+    <div class="brand-header">
+      <i class="fas fa-user-plus"></i>
+      <h2>Buat Akun Baru</h2>
+      <p>Gabung bersama gerakan hemat energi rumah tangga</p>
+    </div>
+
+    <div class="alert" th:if="${errorMsg}">
+      <i class="fas fa-circle-exclamation"></i> <span th:text="${errorMsg}"></span>
+    </div>
+
+    <form th:action="@{/do-register}" method="POST">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Buat nama pengguna unik..." required autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label for="email">Alamat Email</label>
+        <input type="email" id="email" name="email" placeholder="contoh@email.com" required autocomplete="off">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Buat sandi minimal 6 karakter..." required>
+      </div>
+
+      <button type="submit" class="btn-submit">Daftar Akun Baru</button>
+    </form>
+
+    <div class="auth-footer">
+      Sudah punya akun? <a th:href="@{/login}">Masuk di Sini</a>
+    </div>
+  </div>
+
+</body>
+</html>

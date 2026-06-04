@@ -56,8 +56,87 @@
     </div>
   </main>
 
+  </main>
+
   <script src="/js/app.js"></script>
+  
   <script>
+    // Fungsi untuk mengambil data asli dari database dan merendernya ke tabel riwayat
+    function loadHistory() {
+      console.log("Memuat riwayat dari database...");
+      
+      fetch('/api/logs')
+        .then(response => response.json())
+        .then(dataLogs => {
+          const tableBody = document.getElementById("historyTableBody");
+          if (!tableBody) return;
+          
+          tableBody.innerHTML = ""; // Bersihkan loading text atau sisa data
+
+          if (dataLogs.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 20px;">Belum ada data laporan di database. Silakan isi form input terlebih dahulu.</td></tr>`;
+            document.getElementById("eduContent").innerText = "Belum ada log aktivitas untuk dianalisis.";
+            return;
+          }
+
+          // Looping data dari MySQL (tb_records) untuk dimasukkan ke baris tabel HTML
+          dataLogs.forEach(log => {
+            const row = document.createElement("tr");
+            
+            // Format tanggal (Contoh: 04 Jun 2026)
+            const dateObj = new Date(log.tanggal);
+            const opsiTanggal = { day: '2-digit', month: 'short', year: 'numeric' };
+            const tanggalDiformat = dateObj.toLocaleDateString('id-ID', opsiTanggal);
+
+            // Ambil nilai pengeluaran dan emisi (gunakan fallback 0 jika null)
+            const biayaTerformat = (log.biaya || 0).toLocaleString('id-ID');
+            const co2Terformat = (log.co2 || 0).toFixed(1);
+
+            row.innerHTML = `
+  <td><strong>${tanggalDiformat}</strong></td>
+  <td>${log.listrik ? log.listrik.toFixed(2) : '0.00'} <span style="font-size:11px; color:gray;">kWh</span></td>
+  <td>${log.bbm ? log.bbm.toFixed(2) : '0.00'} <span style="font-size:11px; color:gray;">Liter</span></td>
+  <td>${log.air ? log.air.toFixed(2) : '0.00'} <span style="font-size:11px; color:gray;">m³</span></td>
+  <td><span style="color:#516631; font-weight:600;">Rp ${biayaTerformat}</span></td>
+  <td><span style="background-color: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">${co2Terformat} kg CO2</span></td>
+  <td>
+    <button onclick="editRecord(${log.id})" class="btn btn-warning" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; background-color: #f39c12; color: white; border: none; margin-right: 5px;">
+      <i class="fas fa-edit"></i> Edit
+    </button>
+
+    <button onclick="hapusRecord(${log.id})" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; background-color: #e74c3c; color: white; border: none;">
+      <i class="fas fa-trash"></i> Hapus
+    </button>
+  </td>
+`;
+            tableBody.appendChild(row);
+          });
+
+          // Update kotak Analisis Cerdas berdasarkan data terbaru
+          updateEduBoxAnalisis(dataLogs);
+        })
+        .catch(error => {
+          console.error("Gagal mengambil data riwayat:", error);
+          document.getElementById("historyTableBody").innerHTML = `<tr><td colspan="7" style="text-align:center; color:#e74c3c; padding: 20px;">Gagal terhubung ke server localhost.</td></tr>`;
+        });
+    }
+
+    // Fungsi memberikan analisis dinamis pada kotak edukasi hijau di atas tabel
+    function updateEduBoxAnalisis(dataLogs) {
+      const logTerakhir = dataLogs[dataLogs.length - 1];
+      const eduContent = document.getElementById("eduContent");
+      if(logTerakhir && eduContent) {
+        let saran = "Penggunaan energi rumah tangga Anda terpantau stabil secara keseluruhan.";
+        if (logTerakhir.listrik > 15) {
+          saran = "Analisis: Penggunaan listrik pada laporan terakhir Anda cukup tinggi. Pertimbangkan untuk membatasi pemakaian AC!";
+        } else if (logTerakhir.bbm > 6) {
+          saran = "Analisis: Konsumsi BBM kendaraan Anda meningkat dari batas harian normal. Cobalah beralih ke moda transportasi umum.";
+        }
+        eduContent.innerText = saran;
+      }
+    }
+
+    // Pastikan fungsi dipanggil saat halaman selesai dimuat oleh browser
     document.addEventListener("DOMContentLoaded", loadHistory);
   </script>
 </body>

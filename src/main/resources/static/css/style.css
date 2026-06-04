@@ -311,3 +311,30 @@ tr:hover td {
   line-height: 1.5;
   white-space: pre-line;
 }
+
+/* ==========================================================================
+   ANIMASI PERPINDAHAN HALAMAN (PAGE TRANSITION EFFECTS)
+   ========================================================================== */
+
+/* Definisikan keyframes animasi fade-in dan slide-up halus */
+@keyframes pageEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(15px); /* Mulai agak sedikit ke bawah */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);    /* Selesai di posisi asli */
+  }
+}
+
+/* Terapkan animasi pada area konten utama */
+.main {
+  /* ... simpan properti yang sudah ada ... */
+  animation: pageEntrance 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Optimasi efek hover item navigasi agar selaras dengan transisi */
+.nav-item {
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}

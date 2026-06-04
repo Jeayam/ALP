@@ -1,266 +1,303 @@
-const API_URL = '/api/records';
+/**
+ * EnergiKu — Core Application Script
+ * Mengatur AJAX Fetch API, manipulasi DOM, kalkulasi emisi, dan grafik Chart.js
+ */
 
-// --- FUNGSI UTAMA ALL CRUD CRUD OPERATIONS ---
+// Simpan instance chart secara global agar bisa di-update nantinya
+let dashboardChart = null;
 
-// 1. Fungsi Simpan atau Update Data (CREATE / UPDATE)
-async function simpanRecord(event) {
-    event.preventDefault();
+/**
+ * Fungsi Utama: Menginisialisasi seluruh komponen Dashboard dengan mengambil data asli dari Database
+ */
+function initDashboard() {
+    console.log("EnergiKu: Mengambil data dari phpMyAdmin...");
     
-    const recordData = {
-        tanggal: document.getElementById('tanggal').value,
-        listrik: parseFloat(document.getElementById('listrik').value) || 0,
-        bbm: parseFloat(document.getElementById('bbm').value) || 0,
-        air: parseFloat(document.getElementById('air').value) || 0
-    };
-
-    const id = document.getElementById('recordId').value;
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `${API_URL}/${id}` : API_URL;
-
-    try {
-        const response = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(recordData)
-        });
-
-        if (response.ok) {
-            alert(id ? 'Catatan energi berhasil diperbarui!' : 'Catatan energi baru berhasil disimpan!');
-            window.location.href = '/history';
-        } else {
-            alert('Aksi gagal dilakukan. Periksa kembali inputan Anda.');
-        }
-    } catch (error) {
-        console.error('Error saving data:', error);
-    }
-}
-
-// 2. Fungsi Mengisi Form Saat Edit (Mode UPDATE)
-async function checkEditMode() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('editId');
-    if (!editId) return;
-
-    document.getElementById('pageTitle').innerText = "Edit Log Catatan Energi";
-    document.getElementById('recordId').value = editId;
-
-    try {
-        const response = await fetch(`${API_URL}/${editId}`);
-        if (response.ok) {
-            const rec = await response.json();
-            document.getElementById('tanggal').value = rec.tanggal;
-            document.getElementById('listrik').value = rec.listrik;
-            document.getElementById('bbm').value = rec.bbm;
-            document.getElementById('air').value = rec.air;
-        }
-    } catch (e) {
-        console.error('Error fetching one record:', e);
-    }
-}
-
-// 3. Fungsi Load Halaman Riwayat & Edukasi (READ)
-async function loadHistory() {
-    const tableBody = document.getElementById('historyTableBody');
-    if (!tableBody) return;
-
-    try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        tableBody.innerHTML = '';
-
-        if (data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: #72695e;">Belum ada log penggunaan energi terdaftar.</td></tr>`;
-            document.getElementById('eduContent').innerText = "🌱 Belum ada data untuk dianalisis. Silakan masukkan log harian Anda terlebih dahulu pada menu Input.";
-            return;
-        }
-
-        data.sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
-
-        data.forEach(rec => {
-            tableBody.innerHTML += `
-                <tr>
-                    <td><strong>${formatTanggalIndo(rec.tanggal)}</strong></td>
-                    <td>${rec.listrik} kWh</td>
-                    <td>${rec.bbm} Liter</td>
-                    <td>${rec.air} m³</td>
-                    <td><span style="font-weight:600; color:#516631;">Rp ${rec.biaya.toLocaleString('id-ID')}</span></td>
-                    <td><i class="fas fa-smog" style="color:#72695e; margin-right:5px;"></i>${rec.co2.toFixed(2)} kg</td>
-                    <td>
-                        <button class="action-btn btn-edit" onclick="window.location.href='/input?editId=${rec.id}'" title="Ubah Data"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn btn-delete" onclick="hapusRecord(${rec.id})" title="Hapus Data"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        const latestRecord = data[data.length - 1];
-        fetchEdukasiOtomatis(latestRecord.id);
-
-    } catch (error) {
-        console.error('Error loading table history:', error);
-    }
-}
-
-// 4. Ambil Konten Edukasi Dinamis dari Backend
-async function fetchEdukasiOtomatis(id) {
-    try {
-        const response = await fetch(`${API_URL}/${id}/edukasi`);
-        if (response.ok) {
-            const text = await response.text();
-            document.getElementById('eduContent').innerText = text;
-        }
-    } catch (e) {
-        console.stringify(e);
-    }
-}
-
-// 5. Fungsi Delete Data (DELETE)
-async function hapusRecord(id) {
-    if (confirm('Apakah Anda yakin ingin menghapus log pengeluaran energi ini dari database?')) {
-        try {
-            const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-            if (response.ok) {
-                loadHistory();
+    // Panggil API Spring Boot menggunakan Fetch
+    fetch('/api/logs')
+        .then(response => response.json())
+        .then(dataFromDb => {
+            if (dataFromDb.length === 0) {
+                console.log("Database kosong, belum ada data laporan.");
+                // Jika data kosong, panggil visualisasi dengan array kosong agar widget bernilai 0
+                kalkulasiDanUpdateDashboard([]);
+                renderEnergyChart([]);
+                return;
             }
-        } catch (error) {
-            console.error('Error deleting record:', error);
+            
+            // Jalankan kalkulasi & gambar grafik berdasarkan data asli database
+            kalkulasiDanUpdateDashboard(dataFromDb);
+            renderEnergyChart(dataFromDb);
+        })
+        .catch(error => console.error("Gagal memuat data dari database:", error));
+}
+
+/**
+ * Fungsi Perhitungan Akumulasi Akhir & Logika Warning Dampak Lingkungan
+ */
+function kalkulasiDanUpdateDashboard(dataLog) {
+    let totalBiaya = 0;
+    let totalCarbon = 0;
+    let totalHari = dataLog.length;
+    
+    let hasListrik = false;
+    let hasBbm = false;
+    let hasAir = false;
+
+    dataLog.forEach((log, index) => {
+        totalBiaya += log.biaya || 0;
+        totalCarbon += log.co2 || 0;
+
+        if (index === dataLog.length - 1) {
+            if (log.listrik > 0) hasListrik = true;
+            if (log.bbm > 0) hasBbm = true;
+            if (log.air > 0) hasAir = true;
         }
+    });
+
+    // --- 1. UPDATE WIDGET ---
+    document.getElementById("widgetBiaya").innerText = "Rp " + totalBiaya.toLocaleString('id-ID');
+    document.getElementById("widgetCarbon").innerText = totalCarbon.toFixed(1) + " kg";
+    document.getElementById("widgetLog").innerText = totalHari + " Hari";
+
+    // --- 2. LOGIKA ECO-SCORE GRADE (TAMBAHAN) ---
+    const widgetScore = document.getElementById("widgetScore");
+    const widgetScoreText = document.getElementById("widgetScoreText");
+    let grade = "A+", desc = "Sangat Ramah", color = "#516631";
+
+    if (totalCarbon > 200) { grade = "D"; desc = "Boros & Berbahaya"; color = "#e74c3c"; }
+    else if (totalCarbon > 150) { grade = "C"; desc = "Perlu Perbaikan"; color = "#e67e22"; }
+    else if (totalCarbon > 100) { grade = "B"; desc = "Cukup Baik"; color = "#cda97e"; }
+
+    widgetScore.innerText = grade;
+    widgetScore.style.color = color;
+    widgetScoreText.innerText = desc;
+
+    // --- 3. SISTEM PERINGATAN (WARNING) OTOMATIS ---
+    const warningContainer = document.getElementById("warningContainer");
+    if (totalCarbon > 150) {
+        warningContainer.innerHTML = `
+            <div style="background: #fff5f5; border: 1px solid #feb2b2; color: #c53030; padding: 20px; border-radius: 12px; margin-bottom: 24px; animation: fadeIn 0.5s;">
+                <h4 style="margin: 0 0 8px 0;"><i class="fas fa-exclamation-triangle"></i> PERINGATAN BAHAYA</h4>
+                <p style="margin: 0; font-size: 14px;">Total jejak karbon Anda <strong>${totalCarbon.toFixed(1)} kg CO2</strong>. Anda telah melampaui ambang batas aman (150 kg). Mohon kurangi penggunaan energi!</p>
+            </div>
+        `;
+    } else {
+        warningContainer.innerHTML = "";
+    }
+
+    // --- 4. UPDATE BARIS PROGRESS BAR ---
+    const barFill = document.getElementById("targetBarFill");
+    const maxTarget = 150;
+    let percentage = Math.min((totalCarbon / maxTarget) * 100, 100);
+    
+    barFill.style.width = percentage + "%";
+    barFill.style.backgroundColor = (totalCarbon > 150) ? "#e74c3c" : "#516631";
+    document.getElementById("targetBarText").innerText = totalCarbon.toFixed(1) + " kg CO2";
+
+    // --- 5. UPDATE LAMPU STATUS (Fungsi yang sudah ada) ---
+    updateLampuIndikator("indListrik", hasListrik);
+    updateLampuIndikator("indBbm", hasBbm);
+    updateLampuIndikator("indAir", hasAir);
+}
+
+
+
+function updateLampuIndikator(elementId, isLogged) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    if (isLogged) {
+        el.innerText = "Logged";
+        el.className = "status-dot status-green";
+    } else {
+        el.innerText = "Off-Log";
+        el.className = "status-dot status-gray";
     }
 }
 
-// --- LOGIKA UTAMA DASHBOARD & RENDER SKETSA GRAFIK KOSONG ---
-async function initDashboard() {
+/**
+ * Merender Grafik Tren Menggunakan Properti 'co2' dan 'biaya' dari MySQL
+ */
+function renderEnergyChart(dataLog) {
     const ctx = document.getElementById('energyChart');
     if (!ctx) return;
 
-    try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
+    const labelTanggal = dataLog.map(item => {
+        const dateObj = new Date(item.tanggal);
+        return dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+    });
+    
+    const dataCarbon = dataLog.map(item => item.co2 || 0); // Menyesuaikan nama kolom 'co2'
+    const dataBiaya = dataLog.map(item => (item.biaya || 0) / 1000);
 
-        // JIKA DATABASE KOSONG -> RENDER SKETSA GRAFIK KOSONG BIAR CANTIK & BERGARIS
-        if (data.length === 0) {
-            document.getElementById('widgetBiaya').innerText = "Rp 0";
-            document.getElementById('widgetCarbon').innerText = "0.0 kg";
-            document.getElementById('widgetLog').innerText = "0 Hari";
-            document.getElementById('widgetScore').innerText = "-";
-            document.getElementById('widgetScoreText').innerText = "Belum ada log";
+    if (dashboardChart !== null) {
+        dashboardChart.destroy();
+    }
 
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Log Hari 1', 'Log Hari 2', 'Log Hari 3', 'Log Hari 4', 'Log Hari 5'],
-                    datasets: [
-                        { label: 'Sketsa Grid Listrik', data: [0, 0, 0, 0, 0], borderColor: 'rgba(230, 126, 34, 0.25)', borderDash: [6, 6], tension: 0.3, borderWidth: 2 },
-                        { label: 'Sketsa Grid BBM', data: [0, 0, 0, 0, 0], borderColor: 'rgba(231, 76, 60, 0.25)', borderDash: [6, 6], tension: 0.3, borderWidth: 2 },
-                        { label: 'Sketsa Grid Air', data: [0, 0, 0, 0, 0], borderColor: 'rgba(52, 152, 219, 0.25)', borderDash: [6, 6], tension: 0.3, borderWidth: 2 }
-                    ]
+    dashboardChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labelTanggal,
+            datasets: [
+                {
+                    label: 'Jejak Karbon (kg CO2)',
+                    data: dataCarbon,
+                    borderColor: '#72695e',
+                    backgroundColor: 'rgba(114, 105, 94, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    yAxisID: 'y'
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, labels: { font: { family: 'Plus Jakarta Sans', weight: 600 }, color: '#72695e' } },
-                        title: {
-                            display: true,
-                            text: '⚠️ Belum ada entri data harian. Di atas adalah contoh sketsa grid template visualisasi.',
-                            color: '#72695e',
-                            position: 'bottom',
-                            font: { style: 'italic', size: 13, family: 'Plus Jakarta Sans' }
-                        }
-                    },
-                    scales: {
-                        y: { min: 0, max: 10, grid: { color: '#e4ded4' }, ticks: { color: '#a0968a' } },
-                        x: { grid: { color: '#e4ded4' }, ticks: { color: '#a0968a' } }
-                    }
+                {
+                    label: 'Biaya Energi (x1.000 Rp)',
+                    data: dataBiaya,
+                    type: 'bar',
+                    backgroundColor: '#516631',
+                    borderRadius: 5,
+                    barThickness: 20,
+                    yAxisID: 'y1'
                 }
-            });
-            return;
-        }
-
-        // --- PROSES JIKA DATA SUDAH ADA / ADA INPUT ---
-        data.sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
-
-        let totalBiaya = 0;
-        let totalCarbon = 0;
-        data.forEach(r => {
-            totalBiaya += r.biaya;
-            totalCarbon += r.co2;
-        });
-        
-        // Isi Nilai Utama
-        document.getElementById('widgetBiaya').innerText = "Rp " + totalBiaya.toLocaleString('id-ID');
-        document.getElementById('widgetCarbon').innerText = totalCarbon.toFixed(1) + " kg";
-        document.getElementById('widgetLog').innerText = data.length + " Hari";
-
-        // Logic Penghitungan Eco Score Hiasan
-        let rerataCarbon = totalCarbon / data.length;
-        if(rerataCarbon <= 5.0) {
-            document.getElementById('widgetScore').innerText = "A+";
-            document.getElementById('widgetScore').style.color = "#516631";
-            document.getElementById('widgetScoreText').innerText = "Sangat Ramah Lingkungan!";
-        } else if(rerataCarbon <= 10.0) {
-            document.getElementById('widgetScore').innerText = "B";
-            document.getElementById('widgetScore').style.color = "#e67e22";
-            document.getElementById('widgetScoreText').innerText = "Konsumsi Normal Stabil";
-        } else {
-            document.getElementById('widgetScore').innerText = "C";
-            document.getElementById('widgetScore').style.color = "#e74c3c";
-            document.getElementById('widgetScoreText').innerText = "Butuh Penghematan Energi";
-        }
-
-        // Ganti Lampu Indikator Status Menjadi Aktif Terdata
-        document.getElementById('indListrik').innerText = "Aktif";
-        document.getElementById('indListrik').className = "status-dot status-green";
-        document.getElementById('indBbm').innerText = "Aktif";
-        document.getElementById('indBbm').className = "status-dot status-green";
-        document.getElementById('indAir').innerText = "Aktif";
-        document.getElementById('indAir').className = "status-dot status-green";
-
-        // Update Progres Batas Karbon Bulanan Hiasan
-        let persentaseTarget = (totalCarbon / 150) * 100;
-        if(persentaseTarget > 100) persentaseTarget = 100;
-        document.getElementById('targetBarFill').style.width = persentaseTarget + "%";
-        document.getElementById('targetBarText').innerText = totalCarbon.toFixed(1) + " kg CO2";
-        if(totalCarbon > 150) {
-            document.getElementById('targetBarFill').style.backgroundColor = "#e74c3c";
-        }
-
-        // Susun Data Sumbu Grafik Riil
-        const labelsTanggal = data.map(r => formatTanggalIndo(r.tanggal));
-        const datasetListrik = data.map(r => r.listrik);
-        const datasetBBM = data.map(r => r.bbm);
-        const datasetAir = data.map(r => r.air);
-
-        // Render Grafik Asli Riil
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labelsTanggal,
-                datasets: [
-                    { label: 'Listrik (kWh)', data: datasetListrik, borderColor: '#e67e22', backgroundColor: 'rgba(230, 126, 34, 0.08)', tension: 0.3, borderWidth: 3 },
-                    { label: 'BBM (Liter)', data: datasetBBM, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.08)', tension: 0.3, borderWidth: 3 },
-                    { label: 'Air Bersih (m³)', data: datasetAir, borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.08)', tension: 0.3, borderWidth: 3 }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', weight: 600 } } }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#e4ded4' } },
-                    x: { grid: { display: false } }
-                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { type: 'linear', display: true, position: 'left', grid: { color: '#efebe4' } },
+                y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } },
+                x: { grid: { display: false } }
             }
-        });
+        }
+    });
+}
 
-    } catch (e) {
-        console.error('Error rendering dashboard components:', e);
+/**
+ * ========================================================
+ * FUNGSI CRUD AJAX (TAMBAH / UPDATE / HAPUS) DATA DATABASE
+ * ========================================================
+ */
+
+/**
+ * Menangani Form Submit di Halaman input.html dan Menyimpannya ke Backend
+ */
+function simpanRecord(event) {
+    event.preventDefault(); // Menahan refresh halaman manual browser
+
+    const recordId = document.getElementById("recordId").value;
+    const tanggal = document.getElementById("tanggal").value;
+    const listrik = document.getElementById("listrik").value;
+    const bbm = document.getElementById("bbm").value;
+    const air = document.getElementById("air").value;
+
+    // Membentuk data JSON yang strukturnya sama persis dengan Record.java kamu
+    const dataPayload = {
+        tanggal: tanggal,
+        listrik: parseFloat(listrik),
+        bbm: parseFloat(bbm),
+        air: parseFloat(air)
+    };
+
+    // Jika id terdeteksi (Mode Edit/Update), pasang id ke dalam payload
+    if (recordId) {
+        dataPayload.id = parseInt(recordId);
+    }
+
+    // Kirim data menggunakan HTTP POST ke REST API WebController kamu
+    fetch('/api/logs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataPayload)
+    })
+    .then(response => {
+        if (response.ok) {
+            alert("Catatan energi berhasil disimpan ke database!");
+            window.location.href = "/history"; // Pindah otomatis ke halaman riwayat log
+        } else {
+            alert("Gagal menyimpan data ke database, mohon cek kembali inputan.");
+        }
+    })
+    .catch(error => {
+        console.error("Error saat menyimpan data:", error);
+        alert("Terjadi gangguan koneksi ke server localhost.");
+    });
+}
+
+/**
+ * Fungsi Hapus Data Berdasarkan ID dari Database (Bisa dipanggil dari tombol hapus di history.html)
+ */
+function hapusRecord(id) {
+    if (confirm("Apakah Anda yakin ingin menghapus data laporan ini?")) {
+        fetch(`/api/logs/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                alert("Data berhasil dihapus dari database!");
+                window.location.reload(); // Refresh halaman agar data terbaru ter-load kembali
+            } else {
+                alert("Gagal menghapus data.");
+            }
+        })
+        .catch(error => console.error("Error saat menghapus data:", error));
     }
 }
 
-function formatTanggalIndo(stringTanggal) {
-    const opsi = { day: 'numeric', month: 'short' };
-    return new Date(stringTanggal).toLocaleDateString('id-ID', opsi);
+/**
+ * Fungsi pembantu untuk memicu mode edit ketika ditekan dari halaman riwayat
+ */
+/**
+ * Fungsi untuk memicu Mode Edit:
+ * Mengambil data lama berdasarkan ID, lalu menyimpannya ke SessionStorage dan pindah ke halaman input
+ */
+function editRecord(id) {
+    // Ambil semua data dari API untuk mencari data spesifik yang mau diedit
+    fetch('/api/logs')
+        .then(response => response.json())
+        .then(dataLogs => {
+            const dataTarget = dataLogs.find(log => log.id === id);
+            if (dataTarget) {
+                // Simpan data lama ke dalam penyimpanan sementara browser (sessionStorage)
+                sessionStorage.setItem("edit_id", dataTarget.id);
+                sessionStorage.setItem("edit_tanggal", dataTarget.tanggal);
+                sessionStorage.setItem("edit_listrik", dataTarget.listrik);
+                sessionStorage.setItem("edit_bbm", dataTarget.bbm);
+                sessionStorage.setItem("edit_air", dataTarget.air);
+
+                // Alihkan pengguna ke halaman form input
+                window.location.href = "/input";
+            }
+        })
+        .catch(error => console.error("Gagal mengambil data untuk edit:", error));
+}
+
+/**
+ * Fungsi untuk mengecek apakah halaman input dibuka dalam rangka "Mendorong Mode Edit"
+ * Fungsi ini dijalankan otomatis saat halaman input.html selesai dimuat
+ */
+function checkEditMode() {
+    const editId = sessionStorage.getItem("edit_id");
+    
+    // Jika ada data edit_id di dalam storage browser, artinya user sedang mengedit data lama
+    if (editId) {
+        console.log("EnergiKu: Mendeteksi Mode Edit untuk ID " + editId);
+
+        // Ubah judul halaman dan teks tombol agar user tahu mereka sedang mengedit
+        const pageTitle = document.getElementById("pageTitle");
+        if (pageTitle) pageTitle.innerText = "Edit Catatan Penggunaan Energi";
+        
+        const submitBtn = document.querySelector("#energyForm button[type='submit']");
+        if (submitBtn) submitBtn.innerHTML = `<i class="fas fa-edit"></i> Perbarui Catatan Pengeluaran`;
+
+        // Isikan data lama ke dalam kotak input form secara otomatis
+        document.getElementById("recordId").value = editId;
+        document.getElementById("tanggal").value = sessionStorage.getItem("edit_tanggal");
+        document.getElementById("listrik").value = sessionStorage.getItem("edit_listrik");
+        document.getElementById("bbm").value = sessionStorage.getItem("edit_bbm");
+        document.getElementById("air").value = sessionStorage.getItem("edit_air");
+
+        // Setelah data berhasil dimasukkan ke form, hapus tanda storage agar tidak mengganggu inputan baru berikutnya
+        sessionStorage.clear();
+    }
 }

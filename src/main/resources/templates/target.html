@@ -23,7 +23,6 @@
       <a href="/index" class="nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
       <a href="/input" class="nav-item"><i class="fas fa-pen-to-square"></i> Input Energi</a>
       <a href="/history" class="nav-item"><i class="fas fa-history"></i> Riwayat Log</a>
-      
       <div class="nav-section-label">Fitur Tambahan</div>
       <a href="/target" class="nav-item active"><i class="fas fa-bullseye"></i> Target & Acuan</a>
       <a href="/edukasi" class="nav-item"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
@@ -43,22 +42,38 @@
       <div class="info-grid">
         <div class="info-card">
           <i class="fas fa-bolt" style="color:#e67e22; font-size:24px;"></i>
-          <div class="value-tag">Rp 1.444</div>
+          <div class="value-tag" id="tarifListrik">Memuat...</div>
           <p style="font-size:13px; color: var(--text-muted);">Biaya per kWh Listrik</p>
         </div>
         <div class="info-card">
           <i class="fas fa-gas-pump" style="color:#e74c3c; font-size:24px;"></i>
-          <div class="value-tag">Rp 10.000</div>
+          <div class="value-tag" id="tarifBbm">Memuat...</div>
           <p style="font-size:13px; color: var(--text-muted);">Harga Per Liter BBM</p>
         </div>
         <div class="info-card">
           <i class="fas fa-faucet" style="color:#3498db; font-size:24px;"></i>
-          <div class="value-tag">Rp 7.500</div>
+          <div class="value-tag" id="tarifAir">Memuat...</div>
           <p style="font-size:13px; color: var(--text-muted);">Tarif Air Per m³</p>
         </div>
       </div>
     </div>
   </main>
+
+  <script>
+    // Fungsi untuk mengambil data tarif dari Controller Java
+    fetch('/api/tarif')
+      .then(response => response.json())
+      .then(data => {
+        // Mengisi nilai ke dalam elemen HTML berdasarkan ID
+        document.getElementById('tarifListrik').innerText = "Rp " + data.listrik.toLocaleString('id-ID');
+        document.getElementById('tarifBbm').innerText = "Rp " + data.bbm.toLocaleString('id-ID');
+        document.getElementById('tarifAir').innerText = "Rp " + data.air.toLocaleString('id-ID');
+      })
+      .catch(error => {
+        console.error("Gagal mengambil data tarif:", error);
+        document.getElementById('tarifListrik').innerText = "Error";
+      });
+  </script>
 
 </body>
 </html>

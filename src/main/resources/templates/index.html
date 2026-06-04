@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -86,49 +86,53 @@
     /* Challenge Box */
     .challenge-box { background: #fdfaf4; border: 1px dashed var(--accent-warm); border-radius: var(--radius-sm); padding: 14px; margin-top: 10px; display: flex; gap: 12px; align-items: flex-start; }
     .challenge-box i { color: var(--accent-warm); font-size: 18px; margin-top: 2px; }
+
+    /* Animasi fade in untuk warning box */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
 
-  <!-- SIDEBAR UTAMA -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-title"><i class="fas fa-leaf"></i> EnergiKu</div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Utama</div>
-      <a href="/index" class="nav-item active"><i class="fas fa-chart-pie"></i> Dashboard</a>
-      <a href="/input" class="nav-item"><i class="fas fa-pen-to-square"></i> Input Energi</a>
-      <a href="/history" class="nav-item"><i class="fas fa-history"></i> Riwayat Log</a>
+      <a th:href="@{/index}" class="nav-item active"><i class="fas fa-chart-pie"></i> Dashboard</a>
+      <a th:href="@{/input}" class="nav-item"><i class="fas fa-pen-to-square"></i> Input Energi</a>
+      <a th:href="@{/history}" class="nav-item"><i class="fas fa-history"></i> Riwayat Log</a>
       
       <div class="nav-section-label">Fitur Tambahan</div>
-      <a href="/target" class="nav-item"><i class="fas fa-bullseye"></i> Target & Acuan</a>
-      <a href="/edukasi" class="nav-item"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
-      <a href="/pengaturan" class="nav-item"><i class="fas fa-sliders"></i> Pengaturan Tarif</a>
+      <a th:href="@{/target}" class="nav-item"><i class="fas fa-bullseye"></i> Target & Acuan</a>
+      <a th:href="@{/edukasi}" class="nav-item"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
+      <a th:href="@{/pengaturan}" class="nav-item"><i class="fas fa-sliders"></i> Pengaturan Tarif</a>
+
+      <div class="nav-section-label" style="margin-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">Sesi Akun</div>
+      <a th:href="@{/logout}" class="nav-item" style="color: #e74c3c;"><i class="fas fa-right-from-bracket"></i> Keluar (Log Out)</a>
     </nav>
   </aside>
 
-  <!-- CONTENT UTAMA -->
   <main class="main">
     
-    <!-- TOP BAR USER -->
     <div class="profile-section">
       <div class="date-view" style="color: var(--text-muted); font-size: 14px; font-weight: 500;">
         <i class="far fa-calendar-alt"></i> Panel Monitoring Real-Time
       </div>
       <div class="user-badge">
         <div class="user-avatar"><i class="fas fa-user-leaf"></i></div>
-        <span>Halo, Eco User 🌱</span>
+        <span>Halo, <span th:text="${usernameAktif != null ? usernameAktif : 'Eco User'}">Eco User</span> 🌱</span>
       </div>
     </div>
 
-    <!-- BANNER SELAMAT DATANG -->
     <div class="welcome-banner">
       <h2>Selamat Datang di EnergiKu</h2>
       <p>Sistem manajemen cerdas emisi karbon dan pemantauan konsumsi energi harian rumah tangga. Mari kurangi pemborosan demi kelestarian bumi.</p>
     </div>
 
-    <!-- 4 KARTU STATISTIK WIDGET -->
     <div class="stats-grid">
       <div class="stat-card" style="border-left: 4px solid #516631;">
         <div class="stat-icon" style="background:#e6eae1; color:#516631;"><i class="fas fa-wallet"></i></div>
@@ -138,7 +142,8 @@
         </div>
       </div>
       <div class="stat-card" style="border-left: 4px solid #72695e;">
-        <div class="stat-icon" style="background:#f0eee9; color:#72695e;"><i class="fas fa-cloud-smog"></i></div>
+        <div class="stat-icon" style="background:#f0eee9; color:#72695e;">
+          <i class="fas fa-smog"></i> </div>
         <div class="stat-info">
           <p>Total Jejak Carbon</p>
           <h3 id="widgetCarbon">0.0 kg</h3>
@@ -161,10 +166,10 @@
       </div>
     </div>
 
-    <!-- TATA LETAK DUA KOLOM DASHBOARD -->
+    <div id="warningContainer"></div>
+
     <div class="dashboard-layout">
       
-      <!-- KOLOM KIRI: GRAFIK UTAMA / GRAFIK SKETSA KOSONG -->
       <div class="card" style="margin-bottom: 0;">
         <h3 style="font-size: 17px; font-weight: 700;"><i class="fas fa-chart-line" style="color:var(--accent-green); margin-right:8px;"></i>Grafik Tren Naik-Turun Penggunaan Energi</h3>
         <div class="chart-container">
@@ -172,10 +177,8 @@
         </div>
       </div>
 
-      <!-- KOLOM KANAN: PANEL PANEL HIASAN -->
       <div class="side-panel">
         
-        <!-- MONITOR STATUS INDIKATOR -->
         <div class="side-card">
           <h4><i class="fas fa-circle-check" style="color: var(--accent-green);"></i>Status Indikator Hari Ini</h4>
           <div class="indicator-item">
@@ -192,7 +195,6 @@
           </div>
         </div>
 
-        <!-- MONITOR PROGRESS TARGET BULANAN -->
         <div class="side-card">
           <h4><i class="fas fa-shield-heart" style="color: #cda97e;"></i>Batas Keamanan Emisi</h4>
           <p style="font-size: 12px; color: var(--text-muted);">Ambang batas ideal akumulasi emisi karbon (Maksimal 150 kg CO2):</p>
@@ -205,7 +207,6 @@
           </div>
         </div>
 
-        <!-- KOTAK MISI MINGGUAN -->
         <div class="side-card">
           <h4><i class="fas fa-star" style="color: #e67e22;"></i>Misi Hijau Minggu Ini</h4>
           <div class="challenge-box">
@@ -223,11 +224,13 @@
 
   </main>
 
-  <!-- LIBRARY CHART.JS DARI CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/app.js"></script>
   <script>
+    // Memanggil fungsi load database saat halaman dashboard dibuka
     document.addEventListener("DOMContentLoaded", initDashboard);
   </script>
+</body>
+</html>
 </body>
 </html>

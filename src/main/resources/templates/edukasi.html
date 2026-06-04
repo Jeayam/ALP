@@ -12,7 +12,28 @@
     .edu-card h3 { font-size: 18px; color: var(--bg-sidebar); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
     .edu-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
     .badge { background-color: var(--accent-light); color: var(--accent-green); padding: 4px 8px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; display: inline-block; margin-bottom: 12px; }
-  </style>
+    
+    /* Menjaga agar konten tidak kepanjangan */
+/* Update CSS ini di bagian <style> kamu */
+
+.edu-card p {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Cuma tampil 3 baris awal */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: all 0.3s ease; /* Transisi halus */
+    margin: 0; /* Tambahkan ini agar tidak ada margin bawaan */
+}
+
+/* Menggunakan target :hover pada container kartu */
+.edu-card:hover p {
+    -webkit-line-clamp: unset !important; /* Paksa buka semua teks */
+    color: #333; /* Opsional: teks berubah jadi lebih gelap saat hover */
+}
+ </style>
 </head>
 <body>
 
@@ -39,19 +60,42 @@
       <p>Tips praktis mengurangi jejak karbon dan efisiensi konsumsi energi harian rumah tangga</p>
     </div>
 
-    <div class="edu-grid">
-      <div class="edu-card">
-        <span class="badge">Kelistrikan</span>
-        <h3><i class="fas fa-plug-circle-bolt"></i> Efisiensi Energi Rumah</h3>
-        <p>Gunakan pencahayaan alami di siang hari, cabut steker adaptor yang tidak digunakan dari stopkontak, dan bersihkan filter AC berkala untuk meringankan beban kompresor.</p>
+    <div class="edu-grid" id="eduContainer">
       </div>
-      <div class="edu-card" style="border-top-color: var(--accent-warm);">
-        <span class="badge">Konservasi Air</span>
-        <h3><i class="fas fa-droplet"></i> Bijak Mengelola Air</h3>
-        <p>Kurangi durasi mandi kran, gunakan pancuran (shower), serta manfaatkan kembali air bekas mencuci sayur atau buah untuk menyiram tanaman.</p>
-      </div>
-    </div>
   </main>
 
 </body>
+<script>
+    // Fungsi memuat data edukasi dari database
+    function loadEdukasi() {
+      fetch('/api/edukasi')
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById("eduContainer");
+          container.innerHTML = ""; // Bersihkan isi sebelum diisi data baru
+
+          data.forEach(item => {
+            // Tentukan warna border berdasarkan kategori agar menarik
+            let borderColor = "var(--accent-green)";
+            if (item.kategori === "BBM") borderColor = "var(--accent-warm)";
+            if (item.kategori === "Air") borderColor = "#3498db";
+
+            container.innerHTML += `
+              <div class="edu-card" style="border-top-color: ${borderColor};">
+                <span class="badge">${item.kategori}</span>
+                <h3><i class="fas fa-lightbulb"></i> ${item.judul}</h3>
+                <p>${item.kontenTips}</p>
+              </div>
+            `;
+          });
+        })
+        .catch(err => {
+          console.error("Gagal mengambil data edukasi:", err);
+          document.getElementById("eduContainer").innerHTML = "<p>Data edukasi sedang tidak tersedia.</p>";
+        });
+    }
+
+    // Panggil fungsi saat halaman dimuat
+    document.addEventListener("DOMContentLoaded", loadEdukasi);
+  </script>
 </html>
