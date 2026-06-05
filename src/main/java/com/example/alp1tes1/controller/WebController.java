@@ -1,20 +1,19 @@
 package com.example.alp1tes1.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired; // Menggunakan model Record milikmu
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model; // Menggunakan repository milikmu
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import com.example.alp1tes1.model.Record;
 import com.example.alp1tes1.model.User;
-import com.example.alp1tes1.repository.RecordRepository;
-
+import com.example.alp1tes1.model.Edukasi;
+import com.example.alp1tes1.model.Record; // Menggunakan model Record milikmu
+import com.example.alp1tes1.repository.EdukasiRepository;
+import com.example.alp1tes1.repository.RecordRepository; // Menggunakan repository milikmu
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 public class WebController {
@@ -138,6 +137,59 @@ public String dashboardPage(HttpSession session, Model model) {
     // ==========================================
 
     // A. READ: Mengambil data dari phpMyAdmin untuk Chart & Widget Dashboard
+    @GetMapping("/api/logs")
+    @ResponseBody
+    public List<Record> getEnergyLogsApi() {
+        return recordRepository.findAll(); 
+    }
+
+    // B. CREATE & UPDATE: Menyimpan data baru atau memperbarui data lama via AJAX
+    @PostMapping("/api/logs")
+    @ResponseBody
+    public Record saveRecordApi(@RequestBody Record record) {
+        // Kalkulasi otomatis Biaya & CO2 di backend jika frontend belum menghitungnya
+        if (record.getBiaya() == null || record.getBiaya() == 0) {
+            int biayaListrik = (int) (record.getListrik() * 1444);
+            int biayaBbm = (int) (record.getBbm() * 10000);
+            int biayaAir = (int) (record.getAir() * 7500);
+            record.setBiaya(biayaListrik + biayaBbm + biayaAir);
+        }
+        if (record.getCo2() == null || record.getCo2() == 0.0) {
+            double co2Listrik = record.getListrik() * 0.85;
+            double co2Bbm = record.getBbm() * 2.3;
+            double co2Air = record.getAir() * 0.5;
+            record.setCo2(co2Listrik + co2Bbm + co2Air);
+        }
+        
+        // .save() otomatis melakukan INSERT jika ID kosong, dan UPDATE jika ID sudah ada
+        return recordRepository.save(record); 
+    }
+
+    // C. DELETE: Menghapus record berdasarkan ID dari database phpMyAdmin
+    @DeleteMapping("/api/logs/{id}")
+    @ResponseBody
+    public String deleteRecordApi(@PathVariable Long id) {
+        recordRepository.deleteById(id);
+        return "Data berhasil dihapus dari database!";
+    }
+    // Tambahkan di WebController.java
+    @Autowired
+    private EdukasiRepository edukasiRepository; // Inject repository baru
+
+    @GetMapping("/api/edukasi")
+    @ResponseBody
+    public List<Edukasi> getEdukasiApi() {
+    return edukasiRepository.findAll();
+}
+@GetMapping("/api/tarif")
+@ResponseBody
+public Map<String, Double> getTarif() {
+    Map<String, Double> tarif = new HashMap<>();
+    tarif.put("listrik", 1444.0);
+    tarif.put("bbm", 10000.0);
+    tarif.put("air", 7500.0);
+    return tarif;
+}
 // Method untuk menentukan Grade
 private String hitungGrade(double totalEmisi) {
     if (totalEmisi > 200) return "D"; // Buruk
