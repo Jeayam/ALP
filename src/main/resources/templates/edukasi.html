@@ -37,22 +37,42 @@
 </head>
 <body>
 
-  <aside class="sidebar">
+<aside class="sidebar">
+  <div>
     <div class="sidebar-brand">
       <div class="brand-title"><i class="fas fa-leaf"></i> EnergiKu</div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Utama</div>
-      <a href="/index" class="nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
-      <a href="/input" class="nav-item"><i class="fas fa-pen-to-square"></i> Input Energi</a>
-      <a href="/history" class="nav-item"><i class="fas fa-history"></i> Riwayat Log</a>
+      <a th:href="@{/index}" class="nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+      <a th:href="@{/input}" class="nav-item"><i class="fas fa-pen-to-square"></i> Input Energi</a>
+      <a th:href="@{/history}" class="nav-item"><i class="fas fa-history"></i> Riwayat Log</a>
       
       <div class="nav-section-label">Fitur Tambahan</div>
-      <a href="/target" class="nav-item"><i class="fas fa-bullseye"></i> Target & Acuan</a>
-      <a href="/edukasi" class="nav-item active"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
-      <a href="/pengaturan" class="nav-item"><i class="fas fa-sliders"></i> Pengaturan Tarif</a>
+      <a th:href="@{/target}" class="nav-item"><i class="fas fa-bullseye"></i> Target & Acuan</a>
+      <a th:href="@{/edukasi}" class="nav-item"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
+      <a th:href="@{/pengaturan}" class="nav-item"><i class="fas fa-sliders"></i> Pengaturan Tarif</a>
+
+      <div class="nav-section-label" style="margin-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">Sesi Akun</div>
+      <a th:href="@{/logout}" class="nav-item" style="color: #e74c3c;"><i class="fas fa-right-from-bracket"></i> Keluar (Log Out)</a>
     </nav>
-  </aside>
+  </div>
+
+  <!-- Card Profil Eco-Warrior -->
+  <div class="sidebar-profile-card">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+      <div style="width: 35px; height: 35px; background: var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">E</div>
+      <div>
+        <h5 style="margin: 0; color: white; font-size: 14px;" th:text="${usernameAktif != null ? usernameAktif : 'Eco User'}">Eco User</h5>
+        <span style="font-size: 11px; color: #a0aec0;">Eco Warrior</span>
+      </div>
+    </div>
+    <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 11px; color: #cbd5e0;"><i class="fas fa-star" style="color: #ecc94b;"></i> Eco-Points:</span>
+      <strong id="sidebarPoints" style="color: #ecc94b; font-size: 13px;">0 XP</strong>
+    </div>
+  </div>
+</aside>
 
   <main class="main">
     <div class="topbar">

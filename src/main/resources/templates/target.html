@@ -14,21 +14,8 @@
 </head>
 <body>
 
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-title"><i class="fas fa-leaf"></i> EnergiKu</div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Utama</div>
-      <a href="/index" class="nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
-      <a href="/input" class="nav-item"><i class="fas fa-pen-to-square"></i> Input Energi</a>
-      <a href="/history" class="nav-item"><i class="fas fa-history"></i> Riwayat Log</a>
-      <div class="nav-section-label">Fitur Tambahan</div>
-      <a href="/target" class="nav-item active"><i class="fas fa-bullseye"></i> Target & Acuan</a>
-      <a href="/edukasi" class="nav-item"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
-      <a href="/pengaturan" class="nav-item"><i class="fas fa-sliders"></i> Pengaturan Tarif</a>
-    </nav>
-  </aside>
+  <div th:replace="~{fragments/sidebar :: sidebar(page='target')}"></div>
+
 
   <main class="main">
     <div class="topbar">

@@ -94,13 +94,29 @@ function kalkulasiDanUpdateDashboard(dataLog) {
     barFill.style.backgroundColor = (totalCarbon > 150) ? "#e74c3c" : "#516631";
     document.getElementById("targetBarText").innerText = totalCarbon.toFixed(1) + " kg CO2";
 
+    // --- STRATEGI 2: HITUNG KONVERSI POHON SECARA DINAMIS ---
+    let butuhPohon = Math.ceil(totalCarbon / 22); // 1 pohon dewasa menyerap 22 kg CO2/tahun
+    if (totalCarbon === 0) butuhPohon = 0;
+    
+    const textJumlahPohon = document.getElementById("textJumlahPohon");
+    if (textJumlahPohon) textJumlahPohon.innerText = butuhPohon;
+
+    const boxPohon = document.getElementById("boxKonversiPohon");
+    if (boxPohon) {
+        if (totalCarbon > 150) {
+            boxPohon.style.background = "#fffaf0";
+            boxPohon.style.borderColor = "#feebc8";
+        } else {
+            boxPohon.style.background = "#f4f7f1";
+            boxPohon.style.borderColor = "#e2ebd9";
+        }
+    }
+
     // --- 5. UPDATE LAMPU STATUS (Fungsi yang sudah ada) ---
     updateLampuIndikator("indListrik", hasListrik);
     updateLampuIndikator("indBbm", hasBbm);
     updateLampuIndikator("indAir", hasAir);
 }
-
-
 
 function updateLampuIndikator(elementId, isLogged) {
     const el = document.getElementById(elementId);
@@ -126,7 +142,7 @@ function renderEnergyChart(dataLog) {
         return dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
     });
     
-    const dataCarbon = dataLog.map(item => item.co2 || 0); // Menyesuaikan nama kolom 'co2'
+    const dataCarbon = dataLog.map(item => item.co2 || 0);
     const dataBiaya = dataLog.map(item => (item.biaya || 0) / 1000);
 
     if (dashboardChart !== null) {
@@ -177,11 +193,8 @@ function renderEnergyChart(dataLog) {
  * ========================================================
  */
 
-/**
- * Menangani Form Submit di Halaman input.html dan Menyimpannya ke Backend
- */
 function simpanRecord(event) {
-    event.preventDefault(); // Menahan refresh halaman manual browser
+    event.preventDefault();
 
     const recordId = document.getElementById("recordId").value;
     const tanggal = document.getElementById("tanggal").value;
@@ -189,7 +202,6 @@ function simpanRecord(event) {
     const bbm = document.getElementById("bbm").value;
     const air = document.getElementById("air").value;
 
-    // Membentuk data JSON yang strukturnya sama persis dengan Record.java kamu
     const dataPayload = {
         tanggal: tanggal,
         listrik: parseFloat(listrik),
@@ -197,12 +209,10 @@ function simpanRecord(event) {
         air: parseFloat(air)
     };
 
-    // Jika id terdeteksi (Mode Edit/Update), pasang id ke dalam payload
     if (recordId) {
         dataPayload.id = parseInt(recordId);
     }
 
-    // Kirim data menggunakan HTTP POST ke REST API WebController kamu
     fetch('/api/logs', {
         method: 'POST',
         headers: {
@@ -213,7 +223,7 @@ function simpanRecord(event) {
     .then(response => {
         if (response.ok) {
             alert("Catatan energi berhasil disimpan ke database!");
-            window.location.href = "/history"; // Pindah otomatis ke halaman riwayat log
+            window.location.href = "/history";
         } else {
             alert("Gagal menyimpan data ke database, mohon cek kembali inputan.");
         }
@@ -224,9 +234,6 @@ function simpanRecord(event) {
     });
 }
 
-/**
- * Fungsi Hapus Data Berdasarkan ID dari Database (Bisa dipanggil dari tombol hapus di history.html)
- */
 function hapusRecord(id) {
     if (confirm("Apakah Anda yakin ingin menghapus data laporan ini?")) {
         fetch(`/api/logs/${id}`, {
@@ -235,7 +242,7 @@ function hapusRecord(id) {
         .then(response => {
             if (response.ok) {
                 alert("Data berhasil dihapus dari database!");
-                window.location.reload(); // Refresh halaman agar data terbaru ter-load kembali
+                window.location.reload();
             } else {
                 alert("Gagal menghapus data.");
             }
@@ -244,60 +251,79 @@ function hapusRecord(id) {
     }
 }
 
-/**
- * Fungsi pembantu untuk memicu mode edit ketika ditekan dari halaman riwayat
- */
-/**
- * Fungsi untuk memicu Mode Edit:
- * Mengambil data lama berdasarkan ID, lalu menyimpannya ke SessionStorage dan pindah ke halaman input
- */
 function editRecord(id) {
-    // Ambil semua data dari API untuk mencari data spesifik yang mau diedit
     fetch('/api/logs')
         .then(response => response.json())
         .then(dataLogs => {
             const dataTarget = dataLogs.find(log => log.id === id);
             if (dataTarget) {
-                // Simpan data lama ke dalam penyimpanan sementara browser (sessionStorage)
                 sessionStorage.setItem("edit_id", dataTarget.id);
                 sessionStorage.setItem("edit_tanggal", dataTarget.tanggal);
                 sessionStorage.setItem("edit_listrik", dataTarget.listrik);
                 sessionStorage.setItem("edit_bbm", dataTarget.bbm);
                 sessionStorage.setItem("edit_air", dataTarget.air);
-
-                // Alihkan pengguna ke halaman form input
                 window.location.href = "/input";
             }
         })
         .catch(error => console.error("Gagal mengambil data untuk edit:", error));
 }
 
-/**
- * Fungsi untuk mengecek apakah halaman input dibuka dalam rangka "Mendorong Mode Edit"
- * Fungsi ini dijalankan otomatis saat halaman input.html selesai dimuat
- */
 function checkEditMode() {
     const editId = sessionStorage.getItem("edit_id");
-    
-    // Jika ada data edit_id di dalam storage browser, artinya user sedang mengedit data lama
     if (editId) {
         console.log("EnergiKu: Mendeteksi Mode Edit untuk ID " + editId);
-
-        // Ubah judul halaman dan teks tombol agar user tahu mereka sedang mengedit
         const pageTitle = document.getElementById("pageTitle");
         if (pageTitle) pageTitle.innerText = "Edit Catatan Penggunaan Energi";
         
         const submitBtn = document.querySelector("#energyForm button[type='submit']");
         if (submitBtn) submitBtn.innerHTML = `<i class="fas fa-edit"></i> Perbarui Catatan Pengeluaran`;
 
-        // Isikan data lama ke dalam kotak input form secara otomatis
         document.getElementById("recordId").value = editId;
         document.getElementById("tanggal").value = sessionStorage.getItem("edit_tanggal");
         document.getElementById("listrik").value = sessionStorage.getItem("edit_listrik");
         document.getElementById("bbm").value = sessionStorage.getItem("edit_bbm");
         document.getElementById("air").value = sessionStorage.getItem("edit_air");
 
-        // Setelah data berhasil dimasukkan ke form, hapus tanda storage agar tidak mengganggu inputan baru berikutnya
         sessionStorage.clear();
+    }
+}
+
+/**
+ * ========================================================
+ * STRATEGI 1: OPERASI INTERAKTIF ECO-POINTS (LOCALSTORAGE)
+ * ========================================================
+ */
+document.addEventListener("DOMContentLoaded", function() {
+    const pointsElement = document.getElementById("sidebarPoints");
+    if(pointsElement) {
+        let currentPoints = localStorage.getItem("ecoPoints") || 0;
+        pointsElement.innerText = currentPoints + " XP";
+    }
+});
+
+function selesaikanMisi() {
+    if(localStorage.getItem("misiSelesai") === "true") return;
+
+    let currentPoints = parseInt(localStorage.getItem("ecoPoints") || 0);
+    currentPoints += 50;
+    localStorage.setItem("ecoPoints", currentPoints);
+    
+    const sidebarPoints = document.getElementById("sidebarPoints");
+    if(sidebarPoints) sidebarPoints.innerText = currentPoints + " XP";
+    
+    localStorage.setItem("misiSelesai", "true");
+    gantiStatusTombolMisi();
+    
+    alert("Selamat! Kamu mendapatkan +50 Eco-Points karena menjaga bumi hari ini. 🌱");
+}
+
+function gantiStatusTombolMisi() {
+    const btn = document.getElementById("btnMisi");
+    if(btn) {
+        btn.innerHTML = `<i class="fas fa-calendar-check"></i> Misi Selesai Hari Ini`;
+        btn.style.background = "#efebe4";
+        btn.style.color = "#72695e";
+        btn.style.cursor = "not-allowed";
+        btn.disabled = true;
     }
 }

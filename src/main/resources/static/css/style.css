@@ -42,6 +42,21 @@ body {
   height: 100vh;
   z-index: 100;
   border-right: 1px solid rgba(255,255,255,0.05);
+  justify-content: space-between;
+}
+
+.sidebar-nav {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+/* Style untuk Card Profil Sidebar */
+.sidebar-profile-card {
+    margin: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-brand {

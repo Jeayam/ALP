@@ -92,29 +92,15 @@
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Penyesuaian agar sidebar mendorong profil ke bawah */
+    .sidebar { display: flex; flex-direction: column; height: 100vh; justify-content: space-between; }
+    .sidebar-nav { flex-grow: 1; display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
 
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-title"><i class="fas fa-leaf"></i> EnergiKu</div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Utama</div>
-      <a th:href="@{/index}" class="nav-item active"><i class="fas fa-chart-pie"></i> Dashboard</a>
-      <a th:href="@{/input}" class="nav-item"><i class="fas fa-pen-to-square"></i> Input Energi</a>
-      <a th:href="@{/history}" class="nav-item"><i class="fas fa-history"></i> Riwayat Log</a>
-      
-      <div class="nav-section-label">Fitur Tambahan</div>
-      <a th:href="@{/target}" class="nav-item"><i class="fas fa-bullseye"></i> Target & Acuan</a>
-      <a th:href="@{/edukasi}" class="nav-item"><i class="fas fa-book-open"></i> Edukasi & Tips</a>
-      <a th:href="@{/pengaturan}" class="nav-item"><i class="fas fa-sliders"></i> Pengaturan Tarif</a>
-
-      <div class="nav-section-label" style="margin-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">Sesi Akun</div>
-      <a th:href="@{/logout}" class="nav-item" style="color: #e74c3c;"><i class="fas fa-right-from-bracket"></i> Keluar (Log Out)</a>
-    </nav>
-  </aside>
+  <div th:replace="~{fragments/sidebar :: sidebar(page='index')}"></div>
 
   <main class="main">
     
@@ -201,9 +187,17 @@
           <div class="progress-bar-bg">
             <div class="progress-bar-fill" id="targetBarFill"></div>
           </div>
-          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-top:4px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-top:4px; margin-bottom: 12px;">
             <span id="targetBarText">0 kg CO2</span>
             <span style="color: var(--text-muted);">Max: 150 kg</span>
+          </div>
+
+          <!-- STRATEGI 2: Info Dampak Nyata Berupa Pohon -->
+          <div id="boxKonversiPohon" style="background: #f4f7f1; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid #e2ebd9;">
+            <i class="fas fa-tree" style="color: #516631; font-size: 20px;"></i>
+            <div style="font-size: 11px; line-height: 1.4; color: #2a3426;">
+              Secara ilmiah, Anda butuh <strong id="textJumlahPohon" style="color: #516631; font-size: 13px;">0</strong> pohon dewasa untuk menetralisir emisi ini dalam setahun.
+            </div>
           </div>
         </div>
 
@@ -211,9 +205,14 @@
           <h4><i class="fas fa-star" style="color: #e67e22;"></i>Misi Hijau Minggu Ini</h4>
           <div class="challenge-box">
             <i class="fas fa-seedling"></i>
-            <div style="font-size: 13px; line-height: 1.4;">
+            <div style="font-size: 13px; line-height: 1.4; width: 100%;">
               <strong>Cabut Kabel Vampire Power!</strong><br>
-              Lepaskan colokan charger HP atau laptop dari saklar jika baterai sudah penuh 100%.
+              <p style="margin: 4px 0 8px 0; color: var(--text-muted);">Lepaskan colokan charger HP atau laptop dari saklar jika baterai sudah penuh 100%.</p>
+              
+              <!-- STRATEGI 1: Tombol Klaim Poin -->
+              <button id="btnMisi" onclick="selesaikanMisi()" style="width: 100%; background: var(--accent-green); color: white; border: none; padding: 6px; border-radius: 6px; font-weight: 600; font-size: 11px; cursor: pointer; transition: 0.2s;">
+                <i class="fas fa-check-circle"></i> Saya Sudah Lakukan (+50 XP)
+              </button>
             </div>
           </div>
         </div>
@@ -230,7 +229,5 @@
     // Memanggil fungsi load database saat halaman dashboard dibuka
     document.addEventListener("DOMContentLoaded", initDashboard);
   </script>
-</body>
-</html>
 </body>
 </html>
