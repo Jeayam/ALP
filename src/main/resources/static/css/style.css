@@ -353,3 +353,25 @@ tr:hover td {
 .nav-item {
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
+
+/* Memastikan footer selalu di bawah */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Memastikan konten utama (main) mengambil ruang kosong */
+main {
+    flex: 1;
+}
+
+/* Opsional: Jika footer Anda di dalam fragment, pastikan dia tidak memiliki margin-left 
+   yang membuatnya bergeser ke kanan karena sidebar */
+footer {
+    width: 100%;
+    /* Jika sidebar Anda memiliki lebar tertentu (misal 250px), 
+       Anda bisa menambahkan padding-left untuk mengimbangi, 
+       tapi jika footer ingin full lebar layar, biarkan seperti ini */
+}

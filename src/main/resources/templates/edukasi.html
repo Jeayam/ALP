@@ -82,9 +82,11 @@
 
     <div class="edu-grid" id="eduContainer">
       </div>
-  </main>
+  </main> 
 
-</body>
+</body> 
+
+<div th:replace="~{fragments/footer :: footer}" style="width: 100%; grid-column: 1 / -1;"></div>
 <script>
     // Fungsi memuat data edukasi dari database
     function loadEdukasi() {
